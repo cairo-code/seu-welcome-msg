@@ -1,18 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, CheckCircle } from 'lucide-react';
+import { Copy, CheckCircle, Terminal, Key, User, Lock, AlertTriangle, Loader2 } from 'lucide-react';
+import welcome from './welcome.jpeg';
 
 const TerminalLoginPage = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([
-    { text: 'Ancient Scrolls Terminal System v5.2', type: 'system' },
+    { text: '██████╗ █████╗ ███████╗███████╗██╗  ██╗', type: 'logo' },
+    { text: '██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║', type: 'logo' },
+    { text: '██████╔╝███████║███████╗███████╗███████║', type: 'logo' },
+    { text: '██╔═══╝ ██╔══██║╚════██║╚════██║██╔══██║', type: 'logo' },
+    { text: '██║     ██║  ██║███████║███████║██║  ██║', type: 'logo' },
+    { text: '╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝', type: 'logo' },
+    { text: ' ', type: 'system' },
+    { text: 'Ancient Scrolls Terminal System v5.2.1', type: 'system' },
     { text: '© 1492 Royal Library of Alexandria', type: 'system' },
-    { text: '----------------------------------------', type: 'system' },
+    { text: '----------------------------------------', type: 'divider' },
     { text: 'ENCRYPTED MESSAGE RECEIVED...', type: 'alert' },
     { text: 'King Caesar left a message for you:', type: 'system' },
     { text: '"The username is \'seu\'. Guard it with your life."', type: 'message' },
     { text: 'And a telegram from Mr. Morse (WW1 Communications Officer):', type: 'system' },
     { text: '"PASSWORD TRANSMITTED IN MY CODE: .--. .- ... ... .-- --- .-. -.."', type: 'message', copyable: true, copyText: '.--. .- ... ... .-- --- .-. -..' },
-    { text: '----------------------------------------', type: 'system' },
+    { text: '----------------------------------------', type: 'divider' },
     { text: 'Initializing ancient knowledge database...', type: 'loading' },
     { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
     { text: 'Connection established to the Sacred Archives', type: 'success' },
@@ -26,6 +34,8 @@ const TerminalLoginPage = () => {
   const [attemptCount, setAttemptCount] = useState(0);
   const [funnyMessage, setFunnyMessage] = useState('');
   const [copiedStates, setCopiedStates] = useState({});
+  const [isGlitching, setIsGlitching] = useState(false);
+  const [terminalTheme, setTerminalTheme] = useState('dark'); // 'dark', 'light', 'matrix'
   
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
@@ -63,6 +73,15 @@ const TerminalLoginPage = () => {
     }
   }, [history]);
   
+  // Terminal glitch effect on error
+  useEffect(() => {
+    if (attemptCount > 0 && loginState === 'username') {
+      setIsGlitching(true);
+      const timer = setTimeout(() => setIsGlitching(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [attemptCount, loginState]);
+  
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleEnter();
@@ -76,6 +95,12 @@ const TerminalLoginPage = () => {
     } else if (e.key === 'ArrowUp' && loginState === 'username' && attemptCount > 0) {
       e.preventDefault();
       setInput(username);
+    } else if (e.key === 'Escape') {
+      // Cycle through terminal themes
+      const themes = ['dark', 'light', 'matrix'];
+      const currentIndex = themes.indexOf(terminalTheme);
+      const nextIndex = (currentIndex + 1) % themes.length;
+      setTerminalTheme(themes[nextIndex]);
     }
   };
   
@@ -109,6 +134,9 @@ const TerminalLoginPage = () => {
           
           setHistory(prev => [
             ...prev,
+            { text: 'Verifying credentials...', type: 'loading' },
+            { text: 'Decrypting security protocols...', type: 'loading' },
+            { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
             { text: 'Authentication successful!', type: 'success' },
             { text: 'Decrypting ancient knowledge...', type: 'loading' },
             { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
@@ -121,13 +149,16 @@ const TerminalLoginPage = () => {
             'Authentication failed! Invalid credentials.',
             'Access denied! The ancient gods are displeased.',
             'ERROR: Time paradox detected. Invalid login.',
-            `Wrong ${username !== correctUsername ? 'username' : 'password'}! The scrolls remain sealed.`
+            `Wrong ${username !== correctUsername ? 'username' : 'password'}! The scrolls remain sealed.`,
+            'Intruder alert! The system has detected unauthorized access.',
+            'ERROR 418: I\'m a teapot. Also, wrong credentials.'
           ];
           
           const randomError = errorMessages[Math.floor(Math.random() * errorMessages.length)];
           
           setHistory(prev => [
             ...prev,
+            { text: 'Verifying credentials...', type: 'loading' },
             { text: randomError, type: 'error' },
             { text: 'Please try again...', type: 'system' },
             { text: 'login: ', type: 'prompt' }
@@ -171,52 +202,135 @@ const TerminalLoginPage = () => {
         } else {
           clearInterval(timer);
         }
-      }, 50);
+      }, 30);
       
       return () => clearInterval(timer);
     }, [text]);
     
     return <span>{displayText}</span>;
   };
-  
+
+  // Get terminal theme classes
+  const getThemeClasses = () => {
+    switch (terminalTheme) {
+      case 'light':
+        return {
+          bg: 'bg-gray-100',
+          text: 'text-gray-900',
+          border: 'border-gray-300',
+          headerBg: 'bg-gray-200',
+          headerText: 'text-gray-700',
+          prompt: 'text-blue-600',
+          success: 'text-green-700',
+          error: 'text-red-700',
+          alert: 'text-yellow-700',
+          message: 'text-blue-600',
+          loading: 'text-purple-600',
+          progress: 'text-cyan-600',
+          funny: 'text-amber-600',
+          divider: 'text-gray-400',
+          logo: 'text-gray-800'
+        };
+      case 'matrix':
+        return {
+          bg: 'bg-black',
+          text: 'text-green-400',
+          border: 'border-green-700',
+          headerBg: 'bg-green-900 bg-opacity-50',
+          headerText: 'text-green-400',
+          prompt: 'text-green-300',
+          success: 'text-green-300',
+          error: 'text-red-400',
+          alert: 'text-yellow-300',
+          message: 'text-green-200',
+          loading: 'text-green-300',
+          progress: 'text-green-400',
+          funny: 'text-green-300',
+          divider: 'text-green-700',
+          logo: 'text-green-500'
+        };
+      default: // dark
+        return {
+          bg: 'bg-gray-900',
+          text: 'text-gray-100',
+          border: 'border-gray-700',
+          headerBg: 'bg-gray-800',
+          headerText: 'text-gray-300',
+          prompt: 'text-green-400',
+          success: 'text-green-500',
+          error: 'text-red-500',
+          alert: 'text-yellow-500',
+          message: 'text-blue-400',
+          loading: 'text-purple-400',
+          progress: 'text-cyan-400',
+          funny: 'text-amber-400',
+          divider: 'text-gray-600',
+          logo: 'text-gray-300'
+        };
+    }
+  };
+
+  const theme = getThemeClasses();
+
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="bg-black border-2 border-gray-700 rounded-lg overflow-hidden shadow-2xl">
-          <div className="bg-gray-800 px-4 py-2 flex items-center">
+    <div className={`min-h-screen ${theme.bg} flex items-center justify-center p-4 ${terminalTheme === 'matrix' ? 'matrix-bg' : ''}`}>
+      <div className="w-full max-w-4xl">
+        <div className={`${theme.bg} border-2 ${theme.border} rounded-lg overflow-hidden shadow-2xl ${isGlitching ? 'terminal-glitch' : ''}`}>
+          <div className={`${theme.headerBg} px-4 py-2 flex items-center border-b ${theme.border}`}>
             <div className="flex space-x-2 mr-4">
               <div className="w-3 h-3 bg-red-500 rounded-full hover:bg-red-600 transition-colors cursor-pointer"></div>
               <div className="w-3 h-3 bg-yellow-500 rounded-full hover:bg-yellow-600 transition-colors cursor-pointer"></div>
               <div className="w-3 h-3 bg-green-500 rounded-full hover:bg-green-600 transition-colors cursor-pointer"></div>
             </div>
-            <div className="text-gray-300 text-sm font-mono flex-grow text-center">
-              ancient-scrolls ~ zsh ~ 80x24
+            <div className={`${theme.headerText} text-sm font-mono flex-grow text-center flex items-center justify-center`}>
+              <Terminal className="mr-2 h-4 w-4" />
+              <span>ancient-scrolls-terminal ~ zsh ~ 80x24</span>
+            </div>
+            <div className="text-xs opacity-50">
+              {terminalTheme === 'matrix' ? 'MATRIX MODE' : terminalTheme === 'light' ? 'LIGHT MODE' : 'DARK MODE'}
             </div>
           </div>
           
           <div 
             ref={terminalRef}
-            className="p-4 h-96 overflow-y-auto font-mono text-sm"
+            className={`p-4 h-[32rem] overflow-y-auto font-mono text-sm ${theme.text} terminal-content`}
             onClick={() => inputRef.current?.focus()}
           >
             {history.map((item, i) => (
               <div key={i} className={`${
-                item.type === 'system' ? 'text-gray-400' : 
+                item.type === 'system' ? theme.text : 
                 item.type === 'user' ? 'text-white' : 
-                item.type === 'prompt' ? 'text-green-400' : 
-                item.type === 'success' ? 'text-green-500' :
-                item.type === 'error' ? 'text-red-500' :
-                item.type === 'alert' ? 'text-yellow-500 font-bold' :
-                item.type === 'message' ? 'text-blue-400 italic' :
-                item.type === 'loading' ? 'text-purple-400' :
-                item.type === 'progress' ? 'text-cyan-400' :
-                item.type === 'funny' ? 'text-amber-400 font-bold' : ''
+                item.type === 'prompt' ? theme.prompt : 
+                item.type === 'success' ? theme.success :
+                item.type === 'error' ? theme.error :
+                item.type === 'alert' ? `${theme.alert} font-bold` :
+                item.type === 'message' ? `${theme.message} italic` :
+                item.type === 'loading' ? theme.loading :
+                item.type === 'progress' ? theme.progress :
+                item.type === 'funny' ? `${theme.funny} font-bold` :
+                item.type === 'divider' ? theme.divider :
+                item.type === 'logo' ? theme.logo : ''
               } ${item.type === 'alert' || item.type === 'success' || item.type === 'error' ? 'my-1' : ''} flex items-center`}>
+                {item.type === 'prompt' && (
+                  <span className="mr-2">
+                    {loginState === 'password' ? (
+                      <Lock className="h-3 w-3 inline-block" />
+                    ) : (
+                      <User className="h-3 w-3 inline-block" />
+                    )}
+                  </span>
+                )}
+                {item.type === 'error' && (
+                  <AlertTriangle className="h-3 w-3 mr-1 inline-block" />
+                )}
+                {item.type === 'loading' && (
+                  <Loader2 className="h-3 w-3 mr-1 inline-block animate-spin" />
+                )}
                 <span className="flex-grow">{item.text}</span>
                 {item.copyable && (
                   <button 
                     onClick={() => handleCopy(item.copyText, i)}
-                    className="ml-2 text-gray-500 hover:text-white transition-colors focus:outline-none"
+                    className={`ml-2 ${theme.text} hover:opacity-100 opacity-70 transition-opacity focus:outline-none`}
                     title="Copy to clipboard"
                   >
                     {copiedStates[i] ? (
@@ -228,30 +342,51 @@ const TerminalLoginPage = () => {
                 )}
                 {item.type === 'prompt' && loginState !== 'logged-in' && i === history.length - 1 && (
                   <span className="inline-block">
-                    {input}
-                    <span className={`${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity ml-0.5`}>▋</span>
+                    {loginState === 'password' ? '*'.repeat(input.length) : input}
+                    <span className={`${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity ml-0.5 ${theme.text}`}>▋</span>
                   </span>
                 )}
               </div>
             ))}
             
             {loginState === 'logged-in' && (
-              <div className="mt-6 border border-gray-700 p-4 rounded bg-gray-900 animate-fade-in">
-                <div className="text-center text-green-400 mb-4 text-lg">ACCESS GRANTED</div>
-                <div className="border-2 border-green-700 p-1 rounded">
-                  <img src="/api/placeholder/480/320" alt="Welcome" className="mx-auto" />
+              <div className={`mt-6 border ${theme.border} p-4 rounded ${terminalTheme === 'matrix' ? 'bg-black bg-opacity-70' : 'bg-gray-800'} animate-fade-in`}>
+                <div className="text-center text-green-400 mb-4 text-lg flex flex-col items-center">
+                  <Key className="h-8 w-8 mb-2" />
+                  <span>ACCESS GRANTED</span>
                 </div>
-                <div className="text-center text-gray-400 mt-2">./welcome.png</div>
-                <div className="mt-4 text-center text-amber-400">
+                <div className={`border-2 ${theme.border} p-1 rounded`}>
+                  <img src={welcome} alt="Welcome" className="mx-auto max-h-64" />
+                </div>
+                <div className={`text-center ${theme.divider} mt-2`}>./welcome.jpeg</div>
+                <div className="mt-4 text-center">
                   <TypedText text={funnyMessage} />
+                </div>
+                <div className="mt-6 text-center text-xs opacity-70">
+                  Press ESC to change terminal theme
                 </div>
               </div>
             )}
           </div>
           
-          <div className="bg-gray-800 px-4 py-2 text-xs text-gray-400 font-mono flex justify-between">
-            <span>{loginState === 'password' ? 'Password: [Hidden]' : `User: ${input}`}</span>
-            <span>Tab: Autocomplete | Enter: Submit | ↑: History</span>
+          <div className={`${theme.headerBg} px-4 py-2 text-xs ${theme.headerText} font-mono flex justify-between border-t ${theme.border}`}>
+            <span>
+              {loginState === 'password' ? (
+                <span className="flex items-center">
+                  <Lock className="h-3 w-3 mr-1" /> Password: {input.length > 0 ? '*'.repeat(input.length) : '[Hidden]'}
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <User className="h-3 w-3 mr-1" /> User: {input || '[Not entered]'}
+                </span>
+              )}
+            </span>
+            <span className="text-right">
+              <span className="hidden sm:inline">Tab: Autocomplete | </span>
+              <span className="hidden sm:inline">Enter: Submit | </span>
+              <span className="hidden sm:inline">↑: History | </span>
+              ESC: Theme
+            </span>
           </div>
           
           <input
@@ -265,6 +400,53 @@ const TerminalLoginPage = () => {
           />
         </div>
       </div>
+
+      {/* Add some global styles */}
+      <style jsx global>{`
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
+        }
+        
+        .terminal-glitch {
+          animation: glitch 0.1s linear infinite;
+        }
+        
+        .matrix-bg {
+          background: #000 url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+        
+        .terminal-content {
+          scrollbar-width: thin;
+          scrollbar-color: ${terminalTheme === 'light' ? '#cbd5e0' : '#4a5568'} transparent;
+        }
+        
+        .terminal-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .terminal-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .terminal-content::-webkit-scrollbar-thumb {
+          background-color: ${terminalTheme === 'light' ? '#cbd5e0' : '#4a5568'};
+          border-radius: 3px;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };
