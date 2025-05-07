@@ -2,6 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Copy, CheckCircle, Terminal, Key, User, Lock, AlertTriangle, Loader2 } from 'lucide-react';
 import welcome from './welcome.jpeg';
 
+// Caesar cipher encryption function
+const caesarCipher = (text, shift) => {
+  return text
+    .split('')
+    .map(char => {
+      const code = char.charCodeAt(0);
+      // Handle uppercase letters
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(((code - 65 + shift) % 26) + 65);
+      }
+      // Handle lowercase letters
+      else if (code >= 97 && code <= 122) {
+        return String.fromCharCode(((code - 97 + shift) % 26) + 97);
+      }
+      // Handle numbers
+      else if (code >= 48 && code <= 57) {
+        return String.fromCharCode(((code - 48 + shift) % 10) + 48);
+      }
+      // Keep all other characters (symbols, spaces, etc.) unchanged
+      return char;
+    })
+    .join('');
+};
+
 const TerminalLoginPage = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([
@@ -17,9 +41,9 @@ const TerminalLoginPage = () => {
     { text: '----------------------------------------', type: 'divider' },
     { text: 'ENCRYPTED MESSAGE RECEIVED...', type: 'alert' },
     { text: 'King Caesar left a message for you:', type: 'system' },
-    { text: '"The username is \'seu\'. Guard it with your life."', type: 'message' },
+    { text: '"The username is encrypted with shift 3: \'7dpdgd\'. Guard it with your life."', type: 'message' },
     { text: 'And a telegram from Mr. Morse (WW1 Communications Officer):', type: 'system' },
-    { text: '"PASSWORD TRANSMITTED IN MY CODE: .--. .- ... ... .-- --- .-. -.."', type: 'message', copyable: true, copyText: '.--. .- ... ... .-- --- .-. -..' },
+    { text: '"PASSWORD TRANSMITTED IN MY CODE: ..-. . .-. -.-- ... - .-. --- -. -.- .--. .- ... ... .-- --- .-. -.."', type: 'message', copyable: true, copyText: '..-. . .-. -.-- ... - .-. --- -. -.- .--. .- ... ... .-- --- .-. -..' },
     { text: '----------------------------------------', type: 'divider' },
     { text: 'Initializing ancient knowledge database...', type: 'loading' },
     { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
@@ -27,9 +51,10 @@ const TerminalLoginPage = () => {
     { text: 'Please login to continue...', type: 'system' },
     { text: 'login: ', type: 'prompt' }
   ]);
-  const [loginState, setLoginState] = useState('username'); // 'username', 'password', 'logged-in'
+  const [loginState, setLoginState] = useState('username'); // 'username', 'password', 'name', 'logged-in'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showCursor, setShowCursor] = useState(true);
   const [attemptCount, setAttemptCount] = useState(0);
   const [funnyMessage, setFunnyMessage] = useState('');
@@ -40,9 +65,32 @@ const TerminalLoginPage = () => {
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Correct credentials
-  const correctUsername = 'seu';
-  const correctPassword = 'PASSWORD';
+  // Correct credentials (username is encrypted with shift 3)
+  const correctUsername = '7amada';
+  const correctPassword = 'FERYSTRONKPASSWORD';
+  
+  // Telegram bot configuration
+  const TELEGRAM_BOT_TOKEN = '7754253292:AAEgrSQC5ioNtNH1N9p0b43RJU2WE_4VCEs'; // Replace with your bot token
+  const TELEGRAM_CHAT_ID = '5309273112'; // Replace with your chat ID
+
+  const sendToTelegram = async (message) => {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message,
+        }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Error sending message to Telegram:', error);
+      return false;
+    }
+  };
   
   const funnyMessages = [
     "Congratulations! You've unlocked the ancient scrolls. Please don't spill coffee on them like the last guy.",
@@ -120,36 +168,40 @@ const TerminalLoginPage = () => {
       setPassword(input);
       setHistory(prev => [
         ...prev,
-        { text: '********', type: 'user' } // Mask password in history
+        { text: '********', type: 'user' }
       ]);
       
-      // Process login after adding password to history
       setTimeout(() => {
         setAttemptCount(prev => prev + 1);
         
-        if (username === correctUsername && input === correctPassword) {
-          // Pick a random funny message
-          const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
-          setFunnyMessage(randomMessage);
-          
+        // Decrypt entered username for comparison
+        const decryptedUsername = caesarCipher(username, -3);
+        const decryptedCorrectUsername = caesarCipher(correctUsername, -3);
+        
+        // Debug logging (in production, these should be removed)
+        console.log('Entered username (encrypted):', username);
+        console.log('Decrypted entered username:', decryptedUsername);
+        console.log('Correct username (encrypted):', correctUsername);
+        console.log('Decrypted correct username:', decryptedCorrectUsername);
+        console.log('Password match:', input === correctPassword);
+        
+        // Compare decrypted usernames and password
+        if (decryptedUsername === decryptedCorrectUsername && input === correctPassword) {
           setHistory(prev => [
             ...prev,
             { text: 'Verifying credentials...', type: 'loading' },
             { text: 'Decrypting security protocols...', type: 'loading' },
             { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
             { text: 'Authentication successful!', type: 'success' },
-            { text: 'Decrypting ancient knowledge...', type: 'loading' },
-            { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
-            { text: randomMessage, type: 'funny' },
-            { text: 'Welcome to the Sacred Archives, Timekeeper!', type: 'success' }
+            { text: 'Please enter your name: ', type: 'prompt' }
           ]);
-          setLoginState('logged-in');
+          setLoginState('name');
         } else {
           const errorMessages = [
             'Authentication failed! Invalid credentials.',
             'Access denied! The ancient gods are displeased.',
             'ERROR: Time paradox detected. Invalid login.',
-            `Wrong ${username !== correctUsername ? 'username' : 'password'}! The scrolls remain sealed.`,
+            `Wrong ${decryptedUsername !== correctUsername ? 'username' : 'password'}! The scrolls remain sealed.`,
             'Intruder alert! The system has detected unauthorized access.',
             'ERROR 418: I\'m a teapot. Also, wrong credentials.'
           ];
@@ -167,9 +219,42 @@ const TerminalLoginPage = () => {
         }
         setInput('');
       }, 800);
+    } else if (loginState === 'name') {
+      setName(input);
+      setHistory(prev => [
+        ...prev,
+        { text: input, type: 'user' },
+        { text: 'Sending name to headquarters...', type: 'loading' }
+      ]);
+  
+      // Send name to Telegram bot with more details
+      const telegramMessage = `🔐 New User Login Alert!\n\n👤 Name: ${input}\n⏰ Time: ${new Date().toLocaleString()}\n🌐 System: Ancient Scrolls Terminal`;
+      sendToTelegram(telegramMessage).then(success => {
+        if (success) {
+          const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+          setFunnyMessage(randomMessage);
+          
+          setHistory(prev => [
+            ...prev,
+            { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
+            { text: 'Name transmitted successfully to headquarters!', type: 'success' },
+            { text: 'Decrypting ancient knowledge...', type: 'loading' },
+            { text: '[■■■■■■■■■■■■■■■■■■■■] 100%', type: 'progress' },
+            { text: randomMessage, type: 'funny' },
+            { text: `Welcome to the Sacred Archives, ${input}!`, type: 'success' }
+          ]);
+        } else {
+          setHistory(prev => [
+            ...prev,
+            { text: 'Error transmitting name to headquarters!', type: 'error' },
+            { text: 'Continuing anyway...', type: 'system' }
+          ]);
+        }
+        setLoginState('logged-in');
+      });
+      setInput('');
     }
   };
-
   // Copy text to clipboard
   const handleCopy = (text, index) => {
     navigator.clipboard.writeText(text).then(() => {
